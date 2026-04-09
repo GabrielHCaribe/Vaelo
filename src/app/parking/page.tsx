@@ -31,35 +31,44 @@ function ParkingContent() {
 
   useEffect(() => {
     async function fetchParking() {
-      try {
-        // Geocode the typed address
-        const geoRes = await fetch(`/api/geocode?address=${encodeURIComponent(location ?? "")}`);
-        const geoData = await geoRes.json();
+        try {
+        let lat: number;
+        let lng: number;
 
-        if (geoData.error) {
-          setError("Could not find that location. Try a more specific address.");
-          setLoading(false);
-          return;
+        const urlLat = params.get("lat");
+        const urlLng = params.get("lng");
+
+        if (urlLat && urlLng) {
+            // Use coordinates from autocomplete selection
+            lat = parseFloat(urlLat);
+            lng = parseFloat(urlLng);
+            setCenter([lat, lng]);
+        } else {
+            // Fall back to geocoding the typed address
+            const geoRes = await fetch(`/api/geocode?address=${encodeURIComponent(location ?? "")}`);
+            const geoData = await geoRes.json();
+            if (geoData.error) {
+            setError("Could not find that location. Try a more specific address.");
+            setLoading(false);
+            return;
+            }
+            lat = geoData.lat;
+            lng = geoData.lng;
+            setCenter([lat, lng]);
         }
 
-        const { lat, lng } = geoData;
-        setCenter([lat, lng]);
-
-        // Fetch nearby lots around that point
         const parkRes = await fetch(`/api/greenp?lat=${lat}&lng=${lng}&duration=${duration}`);
         const parkData = await parkRes.json();
-
         if (parkData.error) { setError(parkData.error); setLoading(false); return; }
         setLots(parkData.lots);
-      } catch {
+        } catch {
         setError("Something went wrong. Please try again.");
-      } finally {
+        } finally {
         setLoading(false);
-      }
+        }
     }
-
     fetchParking();
-  }, [location, duration]);
+    }, [location, duration]);
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10">
