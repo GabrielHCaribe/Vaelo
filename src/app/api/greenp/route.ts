@@ -6,12 +6,11 @@ export async function GET(request: Request) {
 
   const res = await fetch(
     "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/b66466c3-69c8-4825-9c8b-04b270069193/resource/8549d588-30b0-482e-b872-b21beefdda22/download/green-p-parking-2019.json",
-    { next: { revalidate: 86400 } } // cache for 24 hours
+    { next: { revalidate: 86400 } }
   );
   const data = await res.json();
   const lots = data.carparks;
 
-  // Calculate distance in km using Haversine formula
   function distance(lat2: number, lng2: number) {
     const R = 6371;
     const dLat = ((lat2 - lat) * Math.PI) / 180;
@@ -32,15 +31,15 @@ export async function GET(request: Request) {
       lat: parseFloat(lot.lat),
       lng: parseFloat(lot.lng),
       ratePerHalfHour: parseFloat(lot.rate_half_hour) || 0,
-      estimatedCost: parseFloat(lot.rate_half_hour) * duration * 2,
+      estimatedCost: (parseFloat(lot.rate_half_hour) || 0) * duration * 2,
       type: lot.carpark_type_str,
       capacity: lot.capacity,
       slug: lot.slug,
       distanceKm: distance(parseFloat(lot.lat), parseFloat(lot.lng)),
     }))
-    .filter((lot: any) => lot.distanceKm < 1) // within 1km
+    .filter((lot: any) => lot.distanceKm < 1)
     .sort((a: any, b: any) => a.estimatedCost - b.estimatedCost)
-    .slice(0, 10);
+    .slice(0, 8);
 
   return Response.json({ lots: nearby, duration });
 }

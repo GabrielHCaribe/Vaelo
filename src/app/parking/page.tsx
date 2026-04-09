@@ -11,6 +11,7 @@ type Lot = {
   capacity: string;
   distanceKm: number;
   slug: string;
+  isLiveRate: boolean;
 };
 
 function ParkingContent() {
@@ -50,21 +51,32 @@ function ParkingContent() {
         </button>
         <h1 className="text-2xl font-bold text-indigo-600 mb-1">Nearby Green P Lots</h1>
         <p className="text-gray-500 text-sm mb-6">
-          Near {location} · {duration}h · sorted by estimated cost
+        Near {location} · {duration}h · sorted by estimated cost
+        </p>
+        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+        ⚠️ Rates are approximate. Always confirm the posted rate before parking.
         </p>
 
-        {loading && <p className="text-gray-400 text-sm">Finding nearby lots...</p>}
+        {loading && <p className="text-gray-400 text-sm">Finding nearby lots and fetching live rates...</p>}
         {error && <p className="text-red-500 text-sm">{error}</p>}
         {!loading && !error && lots.length === 0 && (
           <p className="text-gray-500 text-sm">No lots found within 1km.</p>
         )}
 
-        {lots.map((lot) => (
-          <div key={lot.id} className="bg-white rounded-2xl shadow-md p-5 mb-4 flex items-center justify-between">
+        {lots.map((lot, index) => (
+          <div key={lot.id} className={`bg-white rounded-2xl shadow-md p-5 mb-4 flex items-center justify-between ${index === 0 ? "ring-2 ring-indigo-400" : ""}`}>
             <div>
+              {index === 0 && (
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full mb-1 inline-block">
+                  Best Value
+                </span>
+              )}
               <p className="font-semibold text-gray-800">{lot.address}</p>
               <p className="text-sm text-gray-500">
                 {lot.type} · {(lot.distanceKm * 1000).toFixed(0)}m away · ${lot.ratePerHalfHour.toFixed(2)}/30min
+                {lot.isLiveRate && (
+                  <span className="ml-2 text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">Live</span>
+                )}
               </p>
             </div>
             <div className="text-right">
