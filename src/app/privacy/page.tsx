@@ -12,7 +12,7 @@ export default function Privacy() {
           <p>Vaelo does not require you to create an account or provide any personal information to use the service. When you search for parking, we use your device's location (with your permission) to find nearby lots. This location data is used only to perform your search and is never stored or shared.</p>
 
           <h2 className="text-xl font-bold text-gray-900">Cookies and analytics</h2>
-          <p>We may use basic analytics tools to understand how people use Vaelo (e.g. which features are most used, how many visitors we receive). This data is aggregated and anonymous — it cannot be used to identify you personally.</p>
+          <p>"Vaelo uses Google Analytics to collect anonymous usage data to understand how visitors use our site. You can opt out at tools.google.com/dlpage/gaoptout."</p>
 
           <h2 className="text-xl font-bold text-gray-900">Third-party services</h2>
           <p>Vaelo displays data from third-party providers including Green P (Toronto Parking Authority), Flixbus, and Megabus. When you click through to book with these providers, you are subject to their own privacy policies.</p>
