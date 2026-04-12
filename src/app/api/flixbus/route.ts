@@ -3,6 +3,7 @@ export async function GET(request: Request) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
   const date = searchParams.get("date");
+  const adults = parseInt(searchParams.get("adults") ?? "1");
 
   const cityIds: Record<string, string> = {
     "toronto":   "41d79c93-0374-47f3-8f3a-bd154f55153a",
@@ -19,17 +20,15 @@ export async function GET(request: Request) {
     return Response.json({ error: "City not supported yet" }, { status: 400 });
   }
 
-   const [year, month, day] = date!.split("-");
-   const formattedDate = `${day}.${month}.${year}`;
+  const [year, month, day] = date!.split("-");
+  const formattedDate = `${day}.${month}.${year}`;
+  const products = encodeURIComponent(JSON.stringify({ adult: adults }));
 
-   const url = `https://global.api.flixbus.com/search/service/v4/search?from_city_id=${fromId}&to_city_id=${toId}&departure_date=${formattedDate}&products=%7B%22adult%22%3A1%7D&currency=CAD&locale=en_CA&search_by=cities&include_after_midnight_rides=1`;
+  const url = `https://global.api.flixbus.com/search/service/v4/search?from_city_id=${fromId}&to_city_id=${toId}&departure_date=${formattedDate}&products=${products}&currency=CAD&locale=en_CA&search_by=cities&include_after_midnight_rides=1`;
 
-   try {
+  try {
     const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json",
-      },
+      headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" },
     });
     const data = await res.json();
     return Response.json(data);

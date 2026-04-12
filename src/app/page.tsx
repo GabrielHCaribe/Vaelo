@@ -18,6 +18,8 @@ export default function Home() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [date, setDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [tripType, setTripType] = useState<"one-way" | "round-trip">("one-way");
 
   const [location, setLocation] = useState("");
   const [duration, setDuration] = useState("");
@@ -66,8 +68,11 @@ export default function Home() {
 
   const handleBusSearch = () => {
     if (!from || !to || !date) return;
-    router.push(`/results?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${date}`);
-  };
+    if (tripType === "round-trip" && !returnDate) return;
+    const params = new URLSearchParams({ from, to, date, tripType });
+    if (tripType === "round-trip") params.set("returnDate", returnDate);
+    router.push(`/results?${params.toString()}`);
+  };  
 
   const handleParkingSearch = () => {
     if (!location || !duration) return;
@@ -92,6 +97,7 @@ export default function Home() {
   const dateDay = dateParts[2] || "";
 
   const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const busCities = ["Toronto", "London", "Ottawa", "Hamilton", "Kitchener"];
 
   return (
     <div className="min-h-screen bg-white flex flex-col" ref={topRef}>
@@ -250,42 +256,61 @@ export default function Home() {
 
           {tab === "buses" && (
             <>
+              {/* Trip type toggle */}
+              <div className="flex gap-2">
+                {(["one-way", "round-trip"] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => { setTripType(type); setReturnDate(""); }}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                      tripType === type
+                        ? "bg-indigo-100 text-indigo-700 border border-indigo-300"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}
+                  >
+                    {type === "one-way" ? "One Way" : "Round Trip"}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">From</label>
-                <input type="text" placeholder="e.g. Toronto" value={from} onChange={(e) => setFrom(e.target.value)} className={inputClass} />
+                <select value={from} onChange={(e) => setFrom(e.target.value)} className={inputClass}>
+                  <option value="">Select city</option>
+                  {busCities.filter(c => c !== to).map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">To</label>
-                <input type="text" placeholder="e.g. London" value={to} onChange={(e) => setTo(e.target.value)} className={inputClass} />
+                <select value={to} onChange={(e) => setTo(e.target.value)} className={inputClass}>
+                  <option value="">Select city</option>
+                  {busCities.filter(c => c !== from).map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
+
+              {/* Outbound date */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {tripType === "round-trip" ? "Departure Date" : "Date"}
+                </label>
                 <div className="flex gap-2">
-                  <select
-                    value={dateDay}
-                    onChange={(e) => setDate(`${dateYear || new Date().getFullYear()}-${dateMonth || "01"}-${e.target.value}`)}
-                    className={selectClass}
-                  >
+                  <select value={dateDay} onChange={(e) => setDate(`${dateYear || new Date().getFullYear()}-${dateMonth || "01"}-${e.target.value}`)} className={selectClass}>
                     <option value="">Day</option>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
                       <option key={d} value={String(d).padStart(2, "0")}>{d}</option>
                     ))}
                   </select>
-                  <select
-                    value={dateMonth}
-                    onChange={(e) => setDate(`${dateYear || new Date().getFullYear()}-${e.target.value}-${dateDay || "01"}`)}
-                    className={selectClass}
-                  >
+                  <select value={dateMonth} onChange={(e) => setDate(`${dateYear || new Date().getFullYear()}-${e.target.value}-${dateDay || "01"}`)} className={selectClass}>
                     <option value="">Month</option>
                     {months.map((m, i) => (
                       <option key={m} value={String(i + 1).padStart(2, "0")}>{m}</option>
                     ))}
                   </select>
-                  <select
-                    value={dateYear}
-                    onChange={(e) => setDate(`${e.target.value}-${dateMonth || "01"}-${dateDay || "01"}`)}
-                    className={selectClass}
-                  >
+                  <select value={dateYear} onChange={(e) => setDate(`${e.target.value}-${dateMonth || "01"}-${dateDay || "01"}`)} className={selectClass}>
                     <option value="">Year</option>
                     {[2026, 2027].map(y => (
                       <option key={y} value={y}>{y}</option>
@@ -293,6 +318,55 @@ export default function Home() {
                   </select>
                 </div>
               </div>
+
+              {/* Return date — only shown for round trip */}
+              {tripType === "round-trip" && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Return Date</label>
+                  <div className="flex gap-2">
+                    <select
+                      value={returnDate.split("-")[2] || ""}
+                      onChange={(e) => {
+                        const [y, m] = returnDate.split("-");
+                        setReturnDate(`${y || new Date().getFullYear()}-${m || "01"}-${e.target.value}`);
+                      }}
+                      className={selectClass}
+                    >
+                      <option value="">Day</option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                        <option key={d} value={String(d).padStart(2, "0")}>{d}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={returnDate.split("-")[1] || ""}
+                      onChange={(e) => {
+                        const [y, , d] = returnDate.split("-");
+                        setReturnDate(`${y || new Date().getFullYear()}-${e.target.value}-${d || "01"}`);
+                      }}
+                      className={selectClass}
+                    >
+                      <option value="">Month</option>
+                      {months.map((m, i) => (
+                        <option key={m} value={String(i + 1).padStart(2, "0")}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={returnDate.split("-")[0] || ""}
+                      onChange={(e) => {
+                        const [, m, d] = returnDate.split("-");
+                        setReturnDate(`${e.target.value}-${m || "01"}-${d || "01"}`);
+                      }}
+                      className={selectClass}
+                    >
+                      <option value="">Year</option>
+                      {[2026, 2027].map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={handleBusSearch}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm shadow-sm"
